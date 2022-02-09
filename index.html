@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head><title>Cruzando las maldivas</title></head>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+
+<body>
+<h1>Te falta calle</h1>
+<img src="character.png" />
+<img src="fondo_bdd.png" />
+<img src="car_black_2.png" />
+<img src="car_blue_1.png" />
+<img src="car_green_1.png" />
+<img src="car_yellow_4.png" />
+<script>
+let config = {
+	width:800,
+	height:600,
+	scene:{
+		preload: preload,
+		create: start,
+		update: update
+	}
+}
+
+let game = new Phaser.Game(config);
+
+function preload(){
+	this.load.imag('character','character.png');
+}
+
+function start(){
+	graphics = this.add.graphics();
+	image = this.add.image(0, 0, 'character');
+}
+
+function update(){
+
+}
+</script>
+
+</body>
+
+</html>
