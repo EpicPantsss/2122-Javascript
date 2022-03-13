@@ -1,9 +1,11 @@
 {
 	"images":[
-		"car_black_2.png",
+		"enemy_real_trully.png",
 		"car_blue_1.png",
 		"car_green_1.png",
 		"car_yellow_4.png",
-		"fondo_bdd.png"
+		"fondo.png",
+		"Player_sprite.png",
+		"bullet.png"
 	]
 }

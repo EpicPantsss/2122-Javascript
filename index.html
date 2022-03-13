@@ -1,11 +1,11 @@
 <!doctype html>
 <html>
-<head><title>Cruzando las maldivas</title></head>
+<head><title>Salvando las maldivas</title></head>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
 
 <body>
-<h1>Te falta calle</h1>
+<h1>Te falta playa</h1>
 <script>
 let game_w = 800;
 let game_h = 600;
@@ -36,6 +36,16 @@ let car2_img;
 let car3_img;
 let car4_img;
 
+let bullet1;
+let bullet2;
+let bullet3;
+let bullets;
+
+let currentBullet = 0;
+let bulletSpeed = 10;
+
+let bulletShooted = false;
+
 let player_img;
 
 let offset_x = 80;
@@ -47,7 +57,7 @@ let car3_speed = cars_speed + Math.random();
 let car4_speed = cars_speed + Math.random();
 
 
-let player_speed = 5;
+let player_speed = 8;
 let playerX;
 let playerY;
 
@@ -56,17 +66,26 @@ let car2X, car2Y;
 let car3X, car3Y;
 let car4X, car4Y;
 
-let lives = 3, score = 0;
+let lives = 1, score = 0;
 let lives_text, score_text;
+let gameOver_text;
+
+let gameFinished = new Boolean(false);
+
 
 function preload(){
-	this.load.image('character','racer_green.png');
-	this.load.image('background','fondo_bdd.png');
-	this.load.image('car_black','car_black_2.png');
-	this.load.image('car_blue','car_blue_1.png');
-    this.load.image('car_green','car_green_1.png');
-	this.load.image('car_yellow','car_yellow_4.png');
+
+	this.load.image('character','Player_sprite.png');
+	this.load.image('background','fondo.png');
+	this.load.image('car_black','enemy_real_trully.png');
+	this.load.image('car_blue','enemy_real_trully.png');
+    this.load.image('car_green','enemy_real_trully.png');
+	this.load.image('car_yellow','enemy_real_trully.png');
 	
+	this.load.image('bullet','bullet.png');
+	
+	gameOver_text = this.add.text(game_w/2 - 100, game_h/2 - 100, "Game over!! Your score: " + score.toString() + "\n\nRestarting game...");
+	gameOver_text.visible = false;
 }
 
 function start(){
@@ -74,19 +93,13 @@ function start(){
 
 	graphics = this.add.graphics();
 	image = this.add.image(game_w / 2, game_h / 2, 'background');
-    car1_img = this.add.image(game_w - offset_x , 350, 'car_black');
-	car1_img.rotation = 1.55;
-	car1_img.flipY = true;
-    car2_img = this.add.image(game_w - offset_x, 250, 'car_blue');
-	car2_img.rotation = 1.55;
-	car2_img.flipY = true;
+    car1_img = this.add.image(game_w + offset_x , 350, 'car_black');
+    car2_img = this.add.image(game_w + offset_x, 250, 'car_blue');
 
-    car3_img = this.add.image(offset_x, 250, 'car_green');
-	car3_img.rotation = 1.55;
-    car4_img = this.add.image(offset_x, 350, 'car_yellow');
-	car4_img.rotation = 1.55;
+    car3_img = this.add.image(game_w + offset_x, 250, 'car_green');
+    car4_img = this.add.image(game_w + offset_x, 350, 'car_yellow');
 
-	player_img = this.add.image(64, 64, 'character');
+	player_img = this.add.image(offset_x, 64, 'character');
 
 	this.physics.add.existing(player_img, false);
 	
@@ -97,13 +110,32 @@ function start(){
 			this.physics.add.collider(player_img, cars[i], function(player, car){
 		   	    lives--;
    	   		    lives_text.text = "VIDAS: " + lives.toString();
-
+				EndGame();
 				reset();
 			});
 	}
+	
+	bullet1 = this.add.image(offset_x, 45, 'bullet');
+	bullet2 = this.add.image(offset_x, 45, 'bullet');
+	bullet3 = this.add.image(offset_x, 45, 'bullet');
+	bullets = [bullet1, bullet2, bullet3];
+	
+	for (let i = 0; i < bullets.length; i++){
+		this.physics.add.existing(bullets[i], false);
+	for (let sus = 0; sus < cars.length; sus++){
+	    bullets = [bullet1, bullet2, bullet3];
+		this.physics.add.collider(bullets[i], cars[sus], function(bullet, car){
+			score++;
+			bullets[i].y += 1000;
+			score_text.text = "SCORE: " + score.toString();
+			
+			killEnemy(cars[sus]);
+		});
+	}
+	}
 
-    lives_text = this.add.text(game_w/2, 64, "VIDAS: " + lives.toString());
-    score_text = this.add.text(game_w/2 + 128, 64, "SCORE: " + score.toString());
+    lives_text = this.add.text(game_w/2 + 50, 64, "VIDAS: " + lives.toString());
+    score_text = this.add.text(game_w/2 + 178, 64, "SCORE: " + score.toString());
 
 
 	playerX = player_img.x;
@@ -120,32 +152,64 @@ function start(){
 }
 
 function update(){
-	if (cursors.up.isDown){
-		player_img.y -= player_speed;
+	if (gameFinished == false){
+		if (cursors.up.isDown && player_img.y > 0){
+			player_img.y -= player_speed;
+		}
+		else if (cursors.down.isDown && player_img.y < game_h){
+			player_img.y += player_speed;
+		}
+		cursors.space.on('down', function(event){
+			if(!bulletShooted){
+		         bullets[currentBullet].x = player_img.x;
+	   		     bullets[currentBullet].y = player_img.y;
+         		 currentBullet++;
+				 if (currentBullet > bullets.length - 1){ currentBullet = 0; }
+				 bulletShooted = true;
+			}
+		});
+		cursors.space.on('up', function(event){
+			bulletShooted = false;
+		});
+
+		for(let i = 0; i < bullets.length; i++){
+			bullets[i].x += bulletSpeed;
+		}
+	
+		car1_img.x -= car1_speed;
+		car2_img.x -= car2_speed;
+	
+		car3_img.x -= car3_speed;
+		car4_img.x -= car4_speed;
+	
+		flipCar(car1_img);
+		flipCar(car2_img);
+		flipCar(car3_img);
+		flipCar(car4_img);
+		
+		
 	}
-	else if (cursors.down.isDown){
-		player_img.y += player_speed;
-	}
-
-	car1_img.x -= car1_speed;
-	car2_img.x -= car2_speed;
-
-	car3_img.x += car3_speed;
-	car4_img.x += car4_speed;
-
-	flipCar(car1_img);
-	flipCar(car2_img);
-	flipCar(car3_img);
-	flipCar(car4_img);
-
 }
 
 function flipCar(car){
-    if (car.flipY && car.x < -offset_x){
-        car.x = game_w + offset_x;
-    }
-	else if (!car.flipY && car.x > game_w + offset_x) {
-		car.x = -offset_x;
+	if (car.x <  -offset_x) {
+		car.x = game_w + offset_x;
+		lives--;
+		if (lives < 0){
+			EndGame();
+			reset();
+		}
+		lives_text.text = "LIVES: " + lives.toString();
+		car.y = Math.floor(Math.random() * game_h);
+		if (car.y > game_h){
+			car.y = game_h;
+		}
+		else if (car.y < 0){
+			car.y = 0;
+		}
+		if (car == car1_img){
+			car.y = player_img.y;
+		}
 	}
 }
 
@@ -163,8 +227,39 @@ function reset(){
     car3_img.y = car3Y;
 
     car4_img.x = car4X;
-    car4_img.y = car4Y;
-	
+    car4_img.y = car4Y;	
+}
+
+function killEnemy(en){
+	en.x = game_w + offset_x;
+	en.y = Math.floor(Math.floor(Math.random() * game_h));
+}
+
+function EndGame(){
+	if (lives > 0){ return; }
+	gameFinished = true;
+	gameOver_text.text = "Game over!! Your score: " + score.toString() + "\n\nRestarting game...";
+	gameOver_text.visible = true;
+	RestartGame(2000);
+}
+
+//Función para esperar el tiempo que le indiques
+const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+const RestartGame = async (waitTime) => {
+		await sleep(waitTime);
+		gameFinished = false;
+		lives = 3;
+		score = 0;
+		lives_text.text = "VIDAS: " + lives.toString();
+		score_text.text = "SCORE: " + score.toString();
+		gameOver_text.visible = false;
+		
+		// Cambiar la velocidad de los coches a un nuevo valor aleatorio
+		car1_speed = cars_speed + Math.random();
+		car2_speed = cars_speed + Math.random();
+		car3_speed = cars_speed + Math.random();
+		car4_speed = cars_speed + Math.random();
+
 }
 
 </script>

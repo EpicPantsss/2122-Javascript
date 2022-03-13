@@ -20,26 +20,18 @@ let http_server = http.createServer(function(request, response){
 			});
 		}
 	}
-    if (request.url == "/racer_green.png"){
-        fs.readFile("racer_green.png", function(err, data){
+
+
+let html = "index.html";
+    if (request.url == "/"){
+        fs.readFile(html,function(err, data){
             if (err){
-                console.log("error");
-                return
+                console.log("Error2");
+                return;
             }
             response.writeHead(200);
             response.end(data);
-        });
-   }
-
-	fs.readFile("index.html", function(err, data){
-		if (err){
-			console.log("errror");
-			return
-		}
-		response.writeHead(200);
-
-		response.end(data);
-	});
-
+        }); return;
+    }
 }).listen(1095);
 
